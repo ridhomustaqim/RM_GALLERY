@@ -70,36 +70,32 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    body: SafeArea(
+      child: SingleChildScrollView( // Tambahkan ini untuk menghindari overflow
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch, // Agar elemen mengikuti lebar parent
               children: [
                 // Logo / Gambar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    'assets/images/RRR Logo.png',
-                    height: 200,
-                    width: 200,
-                    fit: BoxFit.cover,
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      'assets/images/RRR Logo.png',
+                      height: 150, // Kurangi tinggi agar tidak memakan banyak ruang
+                      width: 150,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                // ClipOval(
-                //   child: Image.asset(
-                //     'assets/images/RRR Logo.png',
-                //     height: 120,
-                //     width: 120,
-                //     fit: BoxFit.cover,
-                //   ),
-                // ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
                 // Input username
                 TextFormField(
@@ -149,28 +145,33 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 30),
 
                 // Tombol login
-                ElevatedButton(
-                  onPressed: _login,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: const Center(child: Text('Login')),
+                SizedBox(
+                  width: double.infinity, // Pastikan tombol memenuhi lebar
+                  child: ElevatedButton(
+                    onPressed: _login,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      child: Text('Login'),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
 
                 // Tombol navigasi ke registrasi
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/register');
-                  },
-                  child: const Text('Belum punya akun? Registrasi'),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/register');
+                    },
+                    child: const Text('Belum punya akun? Registrasi'),
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
