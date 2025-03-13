@@ -21,8 +21,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// Metode login menggunakan username (cari email di tabel `gallery_users`), 
-  /// lalu panggil `signInWithPassword(email, password)` agar session Supabase terbentuk.
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       final username = _usernameController.text.trim();
