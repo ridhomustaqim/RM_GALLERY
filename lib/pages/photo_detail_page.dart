@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class PhotoDetailPage extends StatefulWidget {
   final String imageId;
   final String imageUrl;
-  
 
   const PhotoDetailPage({
     Key? key,
@@ -19,9 +18,18 @@ class PhotoDetailPage extends StatefulWidget {
 class _PhotoDetailPageState extends State<PhotoDetailPage> {
   final supabase = Supabase.instance.client;
 
+  // Status Like
   bool _isLiked = false;
   int _likeCount = 0;
 
+  // Status Save
+  bool _isSaved = false;
+
+  // Data uploader & deskripsi
+  String _uploaderUsername = 'Loading...';
+  String _photoDescription = 'Loading...';
+
+  // Komentar
   final TextEditingController _commentController = TextEditingController();
   List<Map<String, dynamic>> _comments = [];
 
@@ -40,18 +48,41 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     super.dispose();
   }
 
-  /// Memuat data awal: status like & daftar komentar
+  /// Memuat data awal (like, save, detail foto, komentar)
   Future<void> _loadInitialData() async {
     setState(() => _isPageLoading = true);
     try {
       await Future.wait([
         _fetchLikeStatus(),
+        _fetchSaveStatus(),
+        _fetchPhotoDetails(),
         _fetchComments(),
       ]);
     } catch (e) {
       _showErrorSnackBar('Gagal memuat data awal: $e');
     } finally {
       setState(() => _isPageLoading = false);
+    }
+  }
+
+  /// Ambil data username & deskripsi dari `gallery_image` + `gallery_users`
+  Future<void> _fetchPhotoDetails() async {
+    try {
+      final response = await supabase
+          .from('gallery_image')
+          .select('id_user, keterangan_foto, gallery_users(username)')
+          .eq('id_image', widget.imageId)
+          .maybeSingle();
+
+      if (response != null && response is Map) {
+        final userMap = response['gallery_users'] as Map<String, dynamic>?;
+        setState(() {
+          _uploaderUsername = userMap?['username'] ?? 'Unknown';
+          _photoDescription = response['keterangan_foto'] ?? 'Tidak ada deskripsi.';
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('Gagal memuat detail foto: $e');
     }
   }
 
@@ -86,6 +117,26 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
+  /// Mengecek apakah user sudah save
+  Future<void> _fetchSaveStatus() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final userSaveResponse = await supabase
+          .from('gallery_save')
+          .select()
+          .eq('id_image', widget.imageId)
+          .eq('id_user', user.id);
+
+      if (userSaveResponse is List) {
+        setState(() => _isSaved = userSaveResponse.isNotEmpty);
+      }
+    } catch (e) {
+      _showErrorSnackBar('Gagal memuat status save: $e');
+    }
+  }
+
   /// Toggle Like (jika belum like → insert, jika sudah like → delete)
   Future<void> _toggleLike() async {
     final user = supabase.auth.currentUser;
@@ -116,6 +167,41 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       await _fetchLikeStatus();
     } catch (e) {
       _showErrorSnackBar('Gagal mengubah status like: $e');
+    } finally {
+      setState(() => _isActionLoading = false);
+    }
+  }
+
+  /// Toggle Save (jika belum save → insert, jika sudah save → delete)
+  Future<void> _toggleSave() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      _showErrorSnackBar('Harap login terlebih dahulu untuk menyimpan');
+      return;
+    }
+
+    setState(() => _isActionLoading = true);
+    try {
+      if (_isSaved) {
+        // Hapus save
+        await supabase
+            .from('gallery_save')
+            .delete()
+            .eq('id_user', user.id)
+            .eq('id_image', widget.imageId);
+      } else {
+        // Tambah save
+        await supabase.from('gallery_save').insert({
+          'id_user': user.id,
+          'id_image': widget.imageId,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      // Refresh status save
+      await _fetchSaveStatus();
+    } catch (e) {
+      _showErrorSnackBar('Gagal mengubah status save: $e');
     } finally {
       setState(() => _isActionLoading = false);
     }
@@ -219,21 +305,72 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Bagian Like
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _isActionLoading
-                          ? const CircularProgressIndicator()
-                          : IconButton(
-                              icon: Icon(
-                                _isLiked ? Icons.favorite : Icons.favorite_border,
-                                color: _isLiked ? Colors.red : Colors.grey,
-                              ),
-                              onPressed: _toggleLike,
+                  // Row: Like & Save (kiri), Menu (kanan)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        // Like
+                        IconButton(
+                          icon: Icon(
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
+                            color: _isLiked ? Colors.red : Colors.grey,
+                          ),
+                          onPressed: _toggleLike,
+                        ),
+                        // Save
+                        IconButton(
+                          icon: Icon(
+                            _isSaved ? Icons.bookmark : Icons.bookmark_border,
+                            color: _isSaved ? Colors.blue : Colors.grey,
+                          ),
+                          onPressed: _toggleSave,
+                        ),
+                        const SizedBox(width: 8),
+                        Text('$_likeCount Likes'),
+
+                        const Spacer(),
+                        // Icon Menu di kanan
+                        IconButton(
+                          icon: const Icon(Icons.more_vert),
+                          onPressed: () {
+                            // Fitur menu (placeholder)
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Username & Deskripsi
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Username yang upload
+                        Row(
+                          children: [
+                            const Icon(Icons.person, size: 16),
+                            const SizedBox(width: 4),
+                            Text(
+                              _uploaderUsername, 
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                      Text('$_likeCount Likes'),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        // Deskripsi foto
+                        Row(
+                          children: [
+                            const Icon(Icons.description, size: 16),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(_photoDescription),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const Divider(),
 
