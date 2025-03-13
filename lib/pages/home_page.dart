@@ -66,7 +66,6 @@ void _showAddOptions() {
     ),
     builder: (context) {
       return Container(
-        height: MediaQuery.of(context).size.height * 0.5,
         decoration: const BoxDecoration(
           color: Colors.black, // Warna background hitam sesuai desain
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -103,7 +102,7 @@ void _showAddOptions() {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50), // Membuat tombol lebih membulat
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 70, vertical: 12),
               ),
               icon: const Icon(Icons.image),
               label: const Text("Pilih foto"),
