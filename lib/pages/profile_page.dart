@@ -23,7 +23,6 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    // Perbarui tampilan (FAB) saat tab berubah
     _tabController.addListener(() {
       setState(() {});
     });
@@ -69,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   /// Pasang key di sini agar kita bisa memanggil fungsinya dari FAB
   Widget _buildAlbumTab() => _AlbumTab(key: _albumTabKey);
 
-  Widget _buildSaveTab() => const Center(child: Text('Save Tab'));
+  Widget _buildSaveTab() => const _SaveTab();
 
   @override
   Widget build(BuildContext context) {
@@ -469,6 +468,128 @@ class _AlbumTabState extends State<_AlbumTab> with AutomaticKeepAliveClientMixin
                   ),
                 ),
               ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Tab Save: menampilkan foto yang disimpan oleh user
+class _SaveTab extends StatefulWidget {
+  const _SaveTab({Key? key}) : super(key: key);
+  
+  @override
+  State<_SaveTab> createState() => _SaveTabState();
+}
+
+class _SaveTabState extends State<_SaveTab> with AutomaticKeepAliveClientMixin {
+  final supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _savedPhotos = [];
+  bool _isLoading = true;
+  
+  @override
+  bool get wantKeepAlive => true;
+  
+  @override
+  void initState() {
+    super.initState();
+    _fetchSavedPhotos();
+  }
+  
+  /// Mengambil foto yang disimpan oleh user dari tabel `gallery_saves`
+  Future<void> _fetchSavedPhotos() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    try {
+      // Menggunakan pendekatan select dengan join seperti pada LikePage
+      final response = await supabase
+          .from('gallery_saves')
+          .select('*, gallery_image(*)')
+          .eq('id_user', user.id);
+
+      if (response is List) {
+        List<Map<String, dynamic>> images = [];
+        for (final save in response) {
+          if (save['gallery_image'] != null) {
+            if (save['gallery_image'] is List && (save['gallery_image'] as List).isNotEmpty) {
+              final photoData = save['gallery_image'][0] as Map<String, dynamic>;
+              images.add({
+                'id': photoData['id_image'],
+                'url': photoData['image_url'],
+                'name': photoData['nama_foto'],
+                'created_at': photoData['created_at'],
+              });
+            } else if (save['gallery_image'] is Map) {
+              final photoData = save['gallery_image'] as Map<String, dynamic>;
+              images.add({
+                'id': photoData['id_image'],
+                'url': photoData['image_url'],
+                'name': photoData['nama_foto'],
+                'created_at': photoData['created_at'],
+              });
+            }
+          }
+        }
+        setState(() {
+          _savedPhotos = images;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error fetching saved photos: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_savedPhotos.isEmpty) return const Center(child: Text('Belum ada foto yang disimpan'));
+    
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _savedPhotos.length,
+      itemBuilder: (context, index) {
+        final photo = _savedPhotos[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PhotoDetailPage(
+                  imageId: photo['id'],
+                  imageUrl: photo['url'],
+                ),
+              ),
+            );
+          },
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            clipBehavior: Clip.antiAlias,
+            child: Image.network(
+              photo['url'] ?? '',
+              fit: BoxFit.cover,
+              errorBuilder: (ctx, err, stack) {
+                return const Center(child: Icon(Icons.error, color: Colors.red));
+              },
             ),
           ),
         );
