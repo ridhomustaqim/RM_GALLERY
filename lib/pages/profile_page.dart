@@ -498,7 +498,6 @@ class _SaveTabState extends State<_SaveTab> with AutomaticKeepAliveClientMixin {
     _fetchSavedPhotos();
   }
   
-  /// Mengambil foto yang disimpan oleh user dari tabel `gallery_saves`
   Future<void> _fetchSavedPhotos() async {
     final user = supabase.auth.currentUser;
     if (user == null) {
@@ -507,9 +506,8 @@ class _SaveTabState extends State<_SaveTab> with AutomaticKeepAliveClientMixin {
     }
     
     try {
-      // Menggunakan pendekatan select dengan join seperti pada LikePage
       final response = await supabase
-          .from('gallery_saves')
+          .from('gallery_save')
           .select('*, gallery_image(*)')
           .eq('id_user', user.id);
 
