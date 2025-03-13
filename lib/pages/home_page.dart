@@ -57,39 +57,63 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// Menampilkan Bottom Sheet saat tombol tambah ditekan
-  void _showAddOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.black87,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Unggah Foto Baru',
-                style: TextStyle(fontSize: 16, color: Colors.white),
+void _showAddOptions() {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent, // Background transparan agar Container menangani warna
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.black, // Warna background hitam sesuai desain
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Mulai berkreasi sekarang',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPage()));
-                },
-                icon: const Icon(Icons.image),
-                label: const Text("Pilih Foto"),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Unggah foto baru',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white70,
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPage()));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Warna putih seperti pada desain
+                foregroundColor: Colors.black, // Warna ikon dan teks hitam
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50), // Membuat tombol lebih membulat
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              icon: const Icon(Icons.image),
+              label: const Text("Pilih foto"),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
