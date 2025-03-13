@@ -89,13 +89,12 @@ Widget build(BuildContext context) {
                     borderRadius: BorderRadius.circular(15),
                     child: Image.asset(
                       'assets/images/RRR Logo.png',
-                      height: 180, // Kurangi tinggi agar tidak memakan banyak ruang
-                      width: 180,
+                      height: 150, // Kurangi tinggi agar tidak memakan banyak ruang
+                      width: 150,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-            
                 const SizedBox(height: 30),
 
                 // Input username
