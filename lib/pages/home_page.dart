@@ -61,13 +61,13 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true, // Pastikan bisa mengambil seluruh lebar
+      isScrollControlled: true,
       builder: (context) {
         return FractionallySizedBox(
-          widthFactor: 1, // Full width
+          widthFactor: 1,
           child: Container(
             decoration: const BoxDecoration(
-              color: Colors.black, // Background hitam full
+              color: Colors.black,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -75,6 +75,17 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Garis atas
+                Container(
+                  width: 40, // Lebar garis
+                  height: 5, // Tinggi garis
+                  margin: const EdgeInsets.only(bottom: 10), // Jarak ke bawah
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Warna garis
+                    borderRadius: BorderRadius.circular(10), // Membuat garis membulat
+                  ),
+                ),
+
                 const Text(
                   'Mulai berkreasi sekarang',
                   style: TextStyle(
