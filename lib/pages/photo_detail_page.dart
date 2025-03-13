@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class PhotoDetailPage extends StatefulWidget {
   final String imageId;
   final String imageUrl;
+  
 
   const PhotoDetailPage({
     Key? key,
@@ -19,7 +20,6 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   final supabase = Supabase.instance.client;
 
   bool _isLiked = false;
-  bool _isBookmarked = false;
   int _likeCount = 0;
 
   final TextEditingController _commentController = TextEditingController();
@@ -32,7 +32,6 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   void initState() {
     super.initState();
     _loadInitialData();
-    _fetchBookmarkStatus();
   }
 
   @override
@@ -41,6 +40,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     super.dispose();
   }
 
+  /// Memuat data awal: status like & daftar komentar
   Future<void> _loadInitialData() async {
     setState(() => _isPageLoading = true);
     try {
@@ -55,11 +55,13 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
+  /// Mengecek apakah user sudah like + menghitung total like
   Future<void> _fetchLikeStatus() async {
     final user = supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) return; // Skip jika belum login
 
     try {
+      // 1. Cek apakah user sudah like
       final userLikeResponse = await supabase
           .from('gallery_like')
           .select()
@@ -70,6 +72,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
         setState(() => _isLiked = userLikeResponse.isNotEmpty);
       }
 
+      // 2. Ambil semua like di gambar ini, lalu hitung length
       final allLikesResponse = await supabase
           .from('gallery_like')
           .select()
@@ -83,39 +86,25 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
-  Future<void> _fetchBookmarkStatus() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-
-    try {
-      final response = await supabase
-          .from('gallery_bookmarks')
-          .select()
-          .eq('id_user', user.id)
-          .eq('id_image', widget.imageId);
-
-      setState(() => _isBookmarked = response.isNotEmpty);
-    } catch (e) {
-      _showErrorSnackBar('Gagal memuat status bookmark: $e');
-    }
-  }
-
+  /// Toggle Like (jika belum like → insert, jika sudah like → delete)
   Future<void> _toggleLike() async {
     final user = supabase.auth.currentUser;
     if (user == null) {
-      _showErrorSnackBar('Harap login untuk memberikan like');
+      _showErrorSnackBar('Harap login terlebih dahulu untuk like');
       return;
     }
 
     setState(() => _isActionLoading = true);
     try {
       if (_isLiked) {
+        // Hapus like
         await supabase
             .from('gallery_like')
             .delete()
             .eq('id_user', user.id)
             .eq('id_image', widget.imageId);
       } else {
+        // Tambah like
         await supabase.from('gallery_like').insert({
           'id_user': user.id,
           'id_image': widget.imageId,
@@ -123,6 +112,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
         });
       }
 
+      // Refresh status like
       await _fetchLikeStatus();
     } catch (e) {
       _showErrorSnackBar('Gagal mengubah status like: $e');
@@ -131,37 +121,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
-  Future<void> _toggleBookmark() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) {
-      _showErrorSnackBar('Harap login untuk menyimpan gambar');
-      return;
-    }
-
-    setState(() => _isActionLoading = true);
-    try {
-      if (_isBookmarked) {
-        await supabase
-            .from('gallery_bookmarks')
-            .delete()
-            .eq('id_user', user.id)
-            .eq('id_image', widget.imageId);
-      } else {
-        await supabase.from('gallery_bookmarks').insert({
-          'id_user': user.id,
-          'id_image': widget.imageId,
-          'created_at': DateTime.now().toIso8601String(),
-        });
-      }
-
-      await _fetchBookmarkStatus();
-    } catch (e) {
-      _showErrorSnackBar('Gagal mengubah status bookmark: $e');
-    } finally {
-      setState(() => _isActionLoading = false);
-    }
-  }
-
+  /// Ambil daftar komentar
   Future<void> _fetchComments() async {
     try {
       final response = await supabase
@@ -180,6 +140,40 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
+  /// Tambah komentar
+  Future<void> _addComment() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      _showErrorSnackBar('Harap login terlebih dahulu untuk berkomentar');
+      return;
+    }
+
+    final commentText = _commentController.text.trim();
+    if (commentText.isEmpty) return;
+
+    setState(() => _isActionLoading = true);
+    try {
+      await supabase.from('gallery_komentar').insert({
+        'id_user': user.id,
+        'id_image': widget.imageId,
+        'isi_komentar': commentText,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      // Bersihkan field komentar
+      _commentController.clear();
+      FocusScope.of(context).unfocus();
+
+      // Refresh komentar
+      await _fetchComments();
+    } catch (e) {
+      _showErrorSnackBar('Gagal menambah komentar: $e');
+    } finally {
+      setState(() => _isActionLoading = false);
+    }
+  }
+
+  /// Tampilkan Snackbar error
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -193,58 +187,57 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Detail Foto")),
+      appBar: AppBar(
+        title: const Text("Detail Foto"),
+      ),
       body: _isPageLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Gambar utama
                   Image.network(
                     widget.imageUrl,
                     fit: BoxFit.contain,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
-                          "Username",
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          value: progress.expectedTotalBytes != null
+                              ? progress.cumulativeBytesLoaded /
+                                  progress.expectedTotalBytes!
+                              : null,
                         ),
-                        Text(
-                          "Deskripsi Foto",
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
+                    errorBuilder: (ctx, err, stack) {
+                      return const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text("Gagal memuat gambar"),
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
+
+                  // Bagian Like
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              _isLiked ? Icons.favorite : Icons.favorite_border,
-                              color: _isLiked ? Colors.red : Colors.grey,
+                      _isActionLoading
+                          ? const CircularProgressIndicator()
+                          : IconButton(
+                              icon: Icon(
+                                _isLiked ? Icons.favorite : Icons.favorite_border,
+                                color: _isLiked ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: _toggleLike,
                             ),
-                            onPressed: _toggleLike,
-                          ),
-                          Text('$_likeCount'),
-                        ],
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                          color: _isBookmarked ? Colors.black : Colors.grey,
-                        ),
-                        onPressed: _toggleBookmark,
-                      ),
+                      Text('$_likeCount Likes'),
                     ],
                   ),
+                  const Divider(),
+
+                  // Form Komentar
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Row(
@@ -256,15 +249,62 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                               labelText: 'Tulis komentar...',
                               border: OutlineInputBorder(),
                             ),
+                            onSubmitted: (_) => _addComment(),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.send),
-                          onPressed: () {},
-                        ),
+                        const SizedBox(width: 8),
+                        _isActionLoading
+                            ? const CircularProgressIndicator()
+                            : IconButton(
+                                icon: const Icon(Icons.send),
+                                onPressed: _addComment,
+                              ),
                       ],
                     ),
                   ),
+                  const Divider(),
+
+                  // Daftar Komentar
+                  _comments.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('Belum ada komentar'),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _comments.length,
+                          itemBuilder: (context, index) {
+                            final komentar = _comments[index];
+                            final userName = komentar['gallery_users']?['username'] ?? 'Unknown';
+                            final isi = komentar['isi_komentar'] ?? '';
+                            final createdAt = komentar['created_at'] ?? '';
+
+                            return ListTile(
+                              leading: const CircleAvatar(
+                                child: Icon(Icons.person),
+                              ),
+                              title: Text(
+                                userName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(isi),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    createdAt,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ],
               ),
             ),
