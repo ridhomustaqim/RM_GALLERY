@@ -28,9 +28,10 @@ class _LoginPageState extends State<LoginPage> {
       final supabase = Supabase.instance.client;
 
       try {
+        // 1. Cari email user berdasarkan username di tabel gallery_users
         final response = await supabase
             .from('gallery_users')
-            .select('email')
+            .select('email') // hanya butuh email
             .eq('username', username)
             .maybeSingle();
 
@@ -39,17 +40,20 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
 
-        final email = response['email'] as String?;
+        final data = response as Map<String, dynamic>?;
+        final email = data?['email'] as String?;
         if (email == null) {
           _showSnackBar('Data user tidak valid (email tidak ada)');
           return;
         }
 
+        // 2. Login ke Supabase Auth (membuat session)
         final authResponse = await supabase.auth.signInWithPassword(
           email: email,
           password: password,
         );
 
+        // 3. Jika session berhasil dibuat, user dianggap login
         if (authResponse.session != null) {
           _showSnackBar('Login berhasil!');
           Navigator.pushReplacementNamed(context, '/home');
@@ -69,99 +73,100 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Tambahkan ini agar layar bisa menyesuaikan dengan keyboard
       body: SafeArea(
-        child: SingleChildScrollView( // Tambahkan scroll agar layar tidak overflow
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.2, // Atur ukuran agar responsif
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'assets/images/RRR Logo.png',
-                        height: 200,
-                        width: 200,
-                        fit: BoxFit.cover,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo / Gambar
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'assets/images/RRR Logo.png',
+                    height: 200,
+                    width: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                // ClipOval(
+                //   child: Image.asset(
+                //     'assets/images/RRR Logo.png',
+                //     height: 120,
+                //     width: 120,
+                //     fit: BoxFit.cover,
+                //   ),
+                // ),
+                const SizedBox(height: 40),
+
+                // Input username
+                TextFormField(
+                  controller: _usernameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Username',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Masukkan username';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Input password
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Masukkan password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 30),
 
-                  // Input username
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Masukkan username';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Input password
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Masukkan password';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Tombol login
-                  SizedBox(
+                // Tombol login
+                ElevatedButton(
+                  onPressed: _login,
+                  child: Container(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _login,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        child: Text('Login'),
-                      ),
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    child: const Center(child: Text('Login')),
                   ),
-                  const SizedBox(height: 20),
+                ),
+                const SizedBox(height: 20),
 
-                  // Tombol navigasi ke registrasi
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text('Belum punya akun? Registrasi'),
-                  ),
-                ],
-              ),
+                // Tombol navigasi ke registrasi
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/register');
+                  },
+                  child: const Text('Belum punya akun? Registrasi'),
+                ),
+              ],
             ),
           ),
         ),
