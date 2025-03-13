@@ -62,7 +62,7 @@ void _showAddOptions() {
     context: context,
     backgroundColor: Colors.transparent, // Background transparan agar Container menangani warna
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(200)),
     ),
     builder: (context) {
       return Container(
@@ -102,7 +102,7 @@ void _showAddOptions() {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50), // Membuat tombol lebih membulat
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 12),
               ),
               icon: const Icon(Icons.image),
               label: const Text("Pilih foto"),
