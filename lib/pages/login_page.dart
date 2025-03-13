@@ -74,6 +74,7 @@ class _LoginPageState extends State<LoginPage> {
 Widget build(BuildContext context) {
   return Scaffold(
     body: SafeArea(
+      child: Center(
       child: SingleChildScrollView( // Tambahkan ini untuk menghindari overflow
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -171,6 +172,7 @@ Widget build(BuildContext context) {
           ),
         ),
       ),
+    ),
     ),
   );
 }
