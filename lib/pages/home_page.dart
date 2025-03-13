@@ -61,68 +61,72 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true, // Pastikan bisa mengambil seluruh lebar
       builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.black, // Background hitam sesuai desain
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                'Mulai berkreasi sekarang',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Unggah foto baru',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Tombol Pilih Foto
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(50),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPage()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    elevation: 0, // Hilangkan efek shadow default
+        return FractionallySizedBox(
+          widthFactor: 1, // Full width
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.black, // Background hitam full
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Text(
+                  'Mulai berkreasi sekarang',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  icon: const Icon(Icons.image),
-                  label: const Text("Pilih foto"),
                 ),
-              ),
-              const SizedBox(height: 10),
-            ],
+                const SizedBox(height: 4),
+                const Text(
+                  'Unggah foto baru',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Tombol Pilih Foto
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(50),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPage()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.image, color: Colors.purple),
+                    label: const Text("Pilih foto"),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         );
       },
