@@ -86,7 +86,7 @@ Widget build(BuildContext context) {
                 // Logo / Gambar
                 Center(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
                       'assets/images/RRR Logo.png',
                       height: 150, // Kurangi tinggi agar tidak memakan banyak ruang
