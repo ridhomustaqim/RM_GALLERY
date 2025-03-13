@@ -86,15 +86,16 @@ Widget build(BuildContext context) {
                 // Logo / Gambar
                 Center(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(15),
                     child: Image.asset(
                       'assets/images/RRR Logo.png',
-                      height: 150, // Kurangi tinggi agar tidak memakan banyak ruang
-                      width: 150,
+                      height: 180, // Kurangi tinggi agar tidak memakan banyak ruang
+                      width: 180,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
+            
                 const SizedBox(height: 30),
 
                 // Input username
