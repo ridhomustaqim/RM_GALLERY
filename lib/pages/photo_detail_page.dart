@@ -322,7 +322,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                         IconButton(
                           icon: Icon(
                             _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                            color: _isSaved ? Colors.blue : Colors.grey,
+                            color: _isSaved ? Colors.yellow : Colors.grey,
                           ),
                           onPressed: _toggleSave,
                         ),
