@@ -66,6 +66,7 @@ void _showAddOptions() {
     ),
     builder: (context) {
       return Container(
+        height: MediaQuery.of(context).size.height * 0.5,
         decoration: const BoxDecoration(
           color: Colors.black, // Warna background hitam sesuai desain
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
