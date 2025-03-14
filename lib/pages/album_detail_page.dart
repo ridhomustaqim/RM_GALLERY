@@ -92,10 +92,15 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
           .delete()
           .eq('id_album', widget.albumId);
       
+      await supabase
+        .from('album')
+        .delete()
+        .eq('id_album', widget.albumId);
+      
       // Refresh the photos list
       _photos = [];
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua foto berhasil dihapus')),
+        const SnackBar(content: Text('Semua album dan foto berhasil dihapus')),
       );
     } catch (e) {
       debugPrint('Error deleting photos: $e');
