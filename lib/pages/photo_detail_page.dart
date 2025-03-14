@@ -318,16 +318,16 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                           ),
                           onPressed: _toggleLike,
                         ),
+                        Text('$_likeCount Likes'),
                         // Save
                         IconButton(
                           icon: Icon(
                             _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                            color: _isSaved ? Colors.yellow : Colors.grey,
+                            color: _isSaved ? Colors.black : Colors.grey,
                           ),
                           onPressed: _toggleSave,
                         ),
                         const SizedBox(width: 8),
-                        Text('$_likeCount Likes'),
 
                         const Spacer(),
                         // Icon Menu di kanan
