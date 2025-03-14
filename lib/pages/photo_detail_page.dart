@@ -22,7 +22,6 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   bool _isLiked = false;
   int _likeCount = 0;
 
-  // Status Save
   bool _isSaved = false;
 
   bool _isOwner = false;
