@@ -25,6 +25,8 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   // Status Save
   bool _isSaved = false;
 
+  String _uploaderId = '';
+
   // Data uploader & deskripsi
   String _uploaderUsername = 'Loading...';
   String _photoDescription = 'Loading...';
@@ -77,6 +79,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       if (response != null && response is Map) {
         final userMap = response['gallery_users'] as Map<String, dynamic>?;
         setState(() {
+          _uploaderId = response['id_user']; // Simpan ID pemilik foto
           _uploaderUsername = userMap?['username'] ?? 'Unknown';
           _photoDescription = response['keterangan_foto'] ?? 'Tidak ada deskripsi.';
         });
@@ -85,6 +88,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       _showErrorSnackBar('Gagal memuat detail foto: $e');
     }
   }
+
 
   /// Mengecek apakah user sudah like + menghitung total like
   Future<void> _fetchLikeStatus() async {
