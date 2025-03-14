@@ -55,11 +55,121 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
     }
   }
 
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi'),
+          content: const Text('Apakah Anda yakin ingin menghapus semua foto dalam album ini?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteAllPhotos();
+              },
+              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAllPhotos() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Delete all photos in this album
+      await supabase
+          .from('gallery_image')
+          .delete()
+          .eq('id_album', widget.albumId);
+      
+      // Refresh the photos list
+      _photos = [];
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Semua foto berhasil dihapus')),
+      );
+    } catch (e) {
+      debugPrint('Error deleting photos: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus foto')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _navigateToEditAlbum() {
+    // Navigate to edit album page - implement this as needed
+    // For example:
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => EditAlbumPage(
+    //       albumId: widget.albumId,
+    //       albumName: widget.albumName,
+    //     ),
+    //   ),
+    // ).then((_) {
+    //   // Refresh data when coming back from edit page
+    //   _fetchAlbumPhotos();
+    // });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Fitur edit album akan segera tersedia')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.albumName),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'edit') {
+                _navigateToEditAlbum();
+              } else if (value == 'delete') {
+                _showDeleteConfirmation();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Edit Album'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('Hapus Semua Foto'),
+                    ],
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
