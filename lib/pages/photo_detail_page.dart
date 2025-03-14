@@ -79,7 +79,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       if (response != null && response is Map) {
         final userMap = response['gallery_users'] as Map<String, dynamic>?;
         setState(() {
-          _uploaderId = response['id_user']; // Simpan ID pemilik foto
+          _uploaderId = response['id_user'];
           _uploaderUsername = userMap?['username'] ?? 'Unknown';
           _photoDescription = response['keterangan_foto'] ?? 'Tidak ada deskripsi.';
         });
