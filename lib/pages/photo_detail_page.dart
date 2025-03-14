@@ -340,8 +340,8 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                       ],
                     ),
                   ),
-                  
 
+                  
                   // Username & Deskripsi
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
