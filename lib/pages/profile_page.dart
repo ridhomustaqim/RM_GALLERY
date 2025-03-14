@@ -408,10 +408,6 @@ class _AlbumTabState extends State<_AlbumTab> with AutomaticKeepAliveClientMixin
           children: [
             const Text('Belum ada album', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _showAddAlbumDialog,
-              child: const Text('Tambah Album Baru'),
-            ),
           ],
         ),
       );
