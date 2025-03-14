@@ -16,7 +16,6 @@ class AlbumDetailPage extends StatefulWidget {
   State<AlbumDetailPage> createState() => _AlbumDetailPageState();
 }
 
-//anjay
 class _AlbumDetailPageState extends State<AlbumDetailPage> {
   final supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _photos = [];
