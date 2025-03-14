@@ -25,6 +25,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
   // Status Save
   bool _isSaved = false;
 
+  bool _isOwner = false;
   String _uploaderId = '';
 
   // Data uploader & deskripsi
