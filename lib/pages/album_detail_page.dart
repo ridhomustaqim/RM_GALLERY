@@ -88,12 +88,7 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
     try {
       // Delete all photos in this album
       await supabase
-          .from('gallery_image')
-          .delete()
-          .eq('id_album', widget.albumId);
-      
-      await supabase
-        .from('album')
+        .from('gallery_album')
         .delete()
         .eq('id_album', widget.albumId);
       
