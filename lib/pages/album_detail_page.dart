@@ -114,25 +114,114 @@ class _AlbumDetailPageState extends State<AlbumDetailPage> {
     }
   }
 
-  void _navigateToEditAlbum() {
-    // Navigate to edit album page - implement this as needed
-    // For example:
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) => EditAlbumPage(
-    //       albumId: widget.albumId,
-    //       albumName: widget.albumName,
-    //     ),
-    //   ),
-    // ).then((_) {
-    //   // Refresh data when coming back from edit page
-    //   _fetchAlbumPhotos();
-    // });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur edit album akan segera tersedia')),
-    );
+// 1. Tambahkan controller ini di awal class _AlbumDetailPageState,
+// di bawah deklarasi variabel yang sudah ada
+final TextEditingController _albumNameController = TextEditingController();
+final TextEditingController _albumDescController = TextEditingController();
+
+// 2. Buat fungsi baru untuk memuat data album
+Future<void> _loadAlbumData() async {
+  try {
+    final response = await supabase
+      .from('gallery_album')
+      .select('nama_album, deskripsi_album')
+      .eq('id_album', widget.albumId)
+      .single();
+    
+    _albumNameController.text = response['nama_album'] ?? '';
+    _albumDescController.text = response['deskripsi_album'] ?? '';
+  } catch (e) {
+    debugPrint('Error fetching album data: $e');
   }
+}
+
+// 3. Buat fungsi untuk edit album
+Future<void> _editAlbum() async {
+  if (_albumNameController.text.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Nama album tidak boleh kosong')),
+    );
+    return;
+  }
+
+  try {
+    await supabase
+      .from('gallery_album')
+      .update({
+        'nama_album': _albumNameController.text.trim(),
+        'deskripsi_album': _albumDescController.text.trim(),
+      })
+      .eq('id_album', widget.albumId);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Album berhasil diperbarui')),
+      );
+      // Update title di UI dengan rebuild widget tree
+      setState(() {});
+    }
+  } catch (e) {
+    debugPrint('Error updating album: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memperbarui album')),
+      );
+    }
+  }
+}
+
+// 4. Buat fungsi dialog edit
+void _showEditAlbumDialog() {
+  // Muat data album terlebih dahulu
+  _loadAlbumData().then((_) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Album'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _albumNameController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Album',
+                border: OutlineInputBorder(),
+              ),
+              maxLength: 50,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _albumDescController,
+              decoration: const InputDecoration(
+                labelText: 'Deskripsi Album',
+                border: OutlineInputBorder(),
+              ),
+              maxLength: 200,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await _editAlbum();
+              if (mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  });
+}
+
+// 5. Ganti fungsi _navigateToEditAlbum() dengan ini
+void _navigateToEditAlbum() {
+  _showEditAlbumDialog();
+}
 
   @override
   Widget build(BuildContext context) {
