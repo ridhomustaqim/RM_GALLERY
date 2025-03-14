@@ -25,8 +25,12 @@ class _HomePageState extends State<HomePage> {
     _fetchPhotos();
   }
 
-  /// Mengambil foto dari Supabase (termasuk 'id_image')
+  /// Mengambil foto dari Supabase
   Future<void> _fetchPhotos() async {
+    setState(() {
+      _isLoading = true; // Menampilkan loading sebelum data diperbarui
+    });
+
     final supabase = Supabase.instance.client;
     try {
       final response = await supabase
@@ -51,7 +55,7 @@ class _HomePageState extends State<HomePage> {
       debugPrint('Error fetching photos: $e');
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoading = false; // Menghilangkan loading setelah data diambil
       });
     }
   }
@@ -75,17 +79,15 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Garis atas
                 Container(
-                  width: 40, // Lebar garis
-                  height: 5, // Tinggi garis
-                  margin: const EdgeInsets.only(bottom: 10), // Jarak ke bawah
+                  width: 40,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white, // Warna garis
-                    borderRadius: BorderRadius.circular(10), // Membuat garis membulat
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-
                 const Text(
                   'Mulai berkreasi sekarang',
                   style: TextStyle(
@@ -103,8 +105,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Tombol Pilih Foto
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -120,7 +120,10 @@ class _HomePageState extends State<HomePage> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const UploadPage()));
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const UploadPage()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -128,7 +131,8 @@ class _HomePageState extends State<HomePage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
                       elevation: 0,
                     ),
                     icon: const Icon(Icons.image, color: Colors.purple),
@@ -166,13 +170,18 @@ class _HomePageState extends State<HomePage> {
           Icon(Icons.person, size: 30),
         ],
         onTap: (index) {
-          if (index == 2) {
+          if (index == 0) {
+            if (_selectedIndex == 0) {
+              _fetchPhotos(); // Refresh data jika sedang di halaman Home
+            }
+          } else if (index == 2) {
             _showAddOptions();
-          } else {
-            setState(() {
-              _selectedIndex = index;
-            });
+            return; // Mencegah perubahan state karena _showAddOptions sudah menangani aksi
           }
+
+          setState(() {
+            _selectedIndex = index;
+          });
         },
         height: 60.0,
         color: Colors.blue,
@@ -186,72 +195,78 @@ class _HomePageState extends State<HomePage> {
   /// Tampilan utama Home (hanya foto)
   Widget _buildHomeContent() {
     return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          // SliverAppBar dengan logo di kiri dan icon search di kanan
-          SliverAppBar(
-            floating: true,
-            automaticallyImplyLeading: false,
-            leading: Container(
-              margin: const EdgeInsets.only(left: 16),
-              height: 40,
-              width: 40,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: AssetImage('assets/images/RRR Logo.png'),
-                  fit: BoxFit.cover,
+      child: RefreshIndicator(
+        onRefresh: _fetchPhotos,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              automaticallyImplyLeading: false,
+              leading: Container(
+                margin: const EdgeInsets.only(left: 16),
+                height: 40,
+                width: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/RRR Logo.png'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(8),
-            sliver: _isLoading
-                ? const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
-                : _photoList.isEmpty
-                    ? const SliverFillRemaining(child: Center(child: Text('Tidak ada foto tersedia')))
-                    : SliverGrid(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final photo = _photoList[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => PhotoDetailPage(
-                                      imageId: photo['id'],
-                                      imageUrl: photo['url'],
+            SliverPadding(
+              padding: const EdgeInsets.all(8),
+              sliver: _isLoading
+                  ? const SliverFillRemaining(
+                      child: Center(child: CircularProgressIndicator()))
+                  : _photoList.isEmpty
+                      ? const SliverFillRemaining(
+                          child: Center(child: Text('Tidak ada foto tersedia')))
+                      : SliverGrid(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                          ),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              final photo = _photoList[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PhotoDetailPage(
+                                        imageId: photo['id'],
+                                        imageUrl: photo['url'],
+                                      ),
                                     ),
+                                  );
+                                },
+                                child: Card(
+                                  clipBehavior: Clip.antiAlias,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                );
-                              },
-                              child: Card(
-                                clipBehavior: Clip.antiAlias,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    photo['url'],
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (ctx, err, stack) {
+                                      return const Center(
+                                          child: Text('Gagal memuat gambar'));
+                                    },
+                                  ),
                                 ),
-                                child: Image.network(
-                                  photo['url'],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (ctx, err, stack) {
-                                    return const Center(child: Text('Gagal memuat gambar'));
-                                  },
-                                ),
-                              ),
-                            );
-                          },
-                          childCount: _photoList.length,
+                              );
+                            },
+                            childCount: _photoList.length,
+                          ),
                         ),
-                      ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
