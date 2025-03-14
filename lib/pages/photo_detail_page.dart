@@ -44,7 +44,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       final user = supabase.auth.currentUser;
       final likeResponse = user != null
           ? await supabase
-              .from('gallery_likes')
+              .from('gallery_like')
               .select()
               .eq('id_image', widget.imageId)
               .eq('id_user', user.id)
@@ -54,7 +54,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
       // Ambil status save pengguna saat ini
       final saveResponse = user != null
           ? await supabase
-              .from('gallery_saves')
+              .from('gallery_save')
               .select()
               .eq('id_image', widget.imageId)
               .eq('id_user', user.id)
@@ -63,13 +63,13 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
 
       // Ambil jumlah like
       final likeCountResponse = await supabase
-          .from('gallery_likes')
+          .from('gallery_like')
           .select('id_like')
           .eq('id_image', widget.imageId);
 
       // Ambil komentar
       final commentsResponse = await supabase
-          .from('gallery_comments')
+          .from('gallery_komentar')
           .select('comment_text, id_user, gallery_users(username)')
           .eq('id_image', widget.imageId);
 
@@ -101,7 +101,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     try {
       if (_isLiked) {
         await supabase
-            .from('gallery_likes')
+            .from('gallery_like')
             .delete()
             .eq('id_image', widget.imageId)
             .eq('id_user', user.id);
@@ -110,7 +110,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
           _likeCount--;
         });
       } else {
-        await supabase.from('gallery_likes').insert({
+        await supabase.from('gallery_like').insert({
           'id_image': widget.imageId,
           'id_user': user.id,
         });
@@ -134,13 +134,13 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     try {
       if (_isSaved) {
         await supabase
-            .from('gallery_saves')
+            .from('gallery_save')
             .delete()
             .eq('id_image', widget.imageId)
             .eq('id_user', user.id);
         setState(() => _isSaved = false);
       } else {
-        await supabase.from('gallery_saves').insert({
+        await supabase.from('gallery_save').insert({
           'id_image': widget.imageId,
           'id_user': user.id,
         });
@@ -162,7 +162,7 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     if (commentText.isEmpty) return;
 
     try {
-      await supabase.from('gallery_comments').insert({
+      await supabase.from('gallery_komentar').insert({
         'id_image': widget.imageId,
         'id_user': user.id,
         'comment_text': commentText,
