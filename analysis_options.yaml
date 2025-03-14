@@ -22,6 +22,7 @@ analyzer:
     unnecessary_type_check: ignore
     unnecessary_null_comparison: ignore
     prefer_final_fields: ignore
+    prefer_const_literals_to_create_immutables: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:
