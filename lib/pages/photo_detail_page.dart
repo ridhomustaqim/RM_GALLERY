@@ -82,6 +82,8 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
           _uploaderId = response['id_user'];
           _uploaderUsername = userMap?['username'] ?? 'Unknown';
           _photoDescription = response['keterangan_foto'] ?? 'Tidak ada deskripsi.';
+          final user = supabase.auth.currentUser;
+          _isOwner = user != null && user.id == _uploaderId;
         });
       }
     } catch (e) {
@@ -89,14 +91,12 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     }
   }
 
-
   /// Mengecek apakah user sudah like + menghitung total like
   Future<void> _fetchLikeStatus() async {
     final user = supabase.auth.currentUser;
     if (user == null) return; // Skip jika belum login
 
     try {
-      // 1. Cek apakah user sudah like
       final userLikeResponse = await supabase
           .from('gallery_like')
           .select()
@@ -107,7 +107,6 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
         setState(() => _isLiked = userLikeResponse.isNotEmpty);
       }
 
-      // 2. Ambil semua like di gambar ini, lalu hitung length
       final allLikesResponse = await supabase
           .from('gallery_like')
           .select()
@@ -152,22 +151,18 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     setState(() => _isActionLoading = true);
     try {
       if (_isLiked) {
-        // Hapus like
         await supabase
             .from('gallery_like')
             .delete()
             .eq('id_user', user.id)
             .eq('id_image', widget.imageId);
       } else {
-        // Tambah like
         await supabase.from('gallery_like').insert({
           'id_user': user.id,
           'id_image': widget.imageId,
           'created_at': DateTime.now().toIso8601String(),
         });
       }
-
-      // Refresh status like
       await _fetchLikeStatus();
     } catch (e) {
       _showErrorSnackBar('Gagal mengubah status like: $e');
@@ -187,22 +182,18 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
     setState(() => _isActionLoading = true);
     try {
       if (_isSaved) {
-        // Hapus save
         await supabase
             .from('gallery_save')
             .delete()
             .eq('id_user', user.id)
             .eq('id_image', widget.imageId);
       } else {
-        // Tambah save
         await supabase.from('gallery_save').insert({
           'id_user': user.id,
           'id_image': widget.imageId,
           'created_at': DateTime.now().toIso8601String(),
         });
       }
-
-      // Refresh status save
       await _fetchSaveStatus();
     } catch (e) {
       _showErrorSnackBar('Gagal mengubah status save: $e');
@@ -249,17 +240,87 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
         'isi_komentar': commentText,
         'created_at': DateTime.now().toIso8601String(),
       });
-
-      // Bersihkan field komentar
       _commentController.clear();
       FocusScope.of(context).unfocus();
-
-      // Refresh komentar
       await _fetchComments();
     } catch (e) {
       _showErrorSnackBar('Gagal menambah komentar: $e');
     } finally {
       setState(() => _isActionLoading = false);
+    }
+  }
+
+  /// Tampilkan dialog edit deskripsi
+  Future<void> _showEditDialog() async {
+    final newDescription = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: _photoDescription);
+        return AlertDialog(
+          title: const Text('Edit Deskripsi'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Deskripsi'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (newDescription != null && newDescription != _photoDescription) {
+      try {
+        await supabase
+            .from('gallery_image')
+            .update({'keterangan_foto': newDescription})
+            .eq('id_image', widget.imageId);
+        setState(() {
+          _photoDescription = newDescription;
+        });
+      } catch (e) {
+        _showErrorSnackBar('Gagal mengupdate deskripsi: $e');
+      }
+    }
+  }
+
+  /// Tampilkan konfirmasi hapus
+  Future<void> _showDeleteConfirmation() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi Hapus'),
+        content: const Text('Apakah Anda yakin ingin menghapus foto ini?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await supabase
+            .from('gallery_image')
+            .delete()
+            .eq('id_image', widget.imageId);
+        Navigator.pop(context); // Kembali ke halaman sebelumnya
+      } catch (e) {
+        _showErrorSnackBar('Gagal menghapus foto: $e');
+      }
     }
   }
 
@@ -332,38 +393,43 @@ class _PhotoDetailPageState extends State<PhotoDetailPage> {
                           onPressed: _toggleSave,
                         ),
                         const SizedBox(width: 8),
-
                         const Spacer(),
-                        // Icon Menu di kanan
-                        IconButton(
-                          icon: const Icon(Icons.more_vert),
-                          onPressed: () {
-                            // Fitur menu (placeholder)
-                          },
-                        ),
+                        // Menu popup untuk pemilik
+                        if (_isOwner)
+                          PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _showEditDialog();
+                              } else if (value == 'delete') {
+                                _showDeleteConfirmation();
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                              const PopupMenuItem(value: 'delete', child: Text('Hapus')),
+                            ],
+                          ),
                       ],
                     ),
                   ),
-                  
+
                   // Username & Deskripsi
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Username yang upload
                         Row(
                           children: [
                             const Icon(Icons.person, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              _uploaderUsername, 
+                              _uploaderUsername,
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        // Deskripsi foto
                         Row(
                           children: [
                             const Icon(Icons.description, size: 16),
